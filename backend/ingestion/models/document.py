@@ -1,8 +1,9 @@
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, Any
+
+
 @dataclass
 class Document:
     id: str
     content: str
-    metadata:Dict[str, str]
-    
+    metadata: Dict[str, Any]
