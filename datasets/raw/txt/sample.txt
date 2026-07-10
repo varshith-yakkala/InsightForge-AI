@@ -1,0 +1,5 @@
+Hello!
+
+This is my first document.
+
+I am building InsightForge AI from scratch.
