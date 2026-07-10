@@ -7,8 +7,19 @@ from backend.ingestion.models.document import Document
 
 class CharacterChunker(BaseChunker):
 
-    def __init__(self, chunk_size: int = 500):
+    def __init__(
+        self,
+        chunk_size: int = 500,
+        chunk_overlap: int = 100,
+    ):
+
+        if chunk_overlap >= chunk_size:
+            raise ValueError(
+                "chunk_overlap must be smaller than chunk_size."
+            )
+
         self.chunk_size = chunk_size
+        self.chunk_overlap = chunk_overlap
 
     def chunk(self, document: Document) -> list[Chunk]:
 
@@ -16,9 +27,15 @@ class CharacterChunker(BaseChunker):
 
         text = document.content
 
-        for i in range(0, len(text), self.chunk_size):
+        start = 0
 
-            chunk_text = text[i:i + self.chunk_size]
+        chunk_number = 0
+
+        while start < len(text):
+
+            end = start + self.chunk_size
+
+            chunk_text = text[start:end]
 
             chunk = Chunk(
                 id=str(uuid.uuid4()),
@@ -26,12 +43,16 @@ class CharacterChunker(BaseChunker):
                 content=chunk_text,
                 metadata={
                     **document.metadata,
-                    "chunk_number": len(chunks),
-                    "start_char": i,
-                    "end_char": i + len(chunk_text)
-                }
+                    "chunk_number": chunk_number,
+                    "start_char": start,
+                    "end_char": start + len(chunk_text),
+                },
             )
 
             chunks.append(chunk)
+
+            chunk_number += 1
+
+            start += self.chunk_size - self.chunk_overlap
 
         return chunks
