@@ -6,58 +6,43 @@ from backend.embeddings.models.embedding import Embedding
 
 class EmbeddingService:
 
-    def __init__(
-        self,
-        model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
-    ):
-        print("Loading embedding model...")
+    _model = None
 
-        self.model = SentenceTransformer(model_name)
+    def __init__(self):
 
-        print("Embedding model loaded.")
+        if EmbeddingService._model is None:
+            print("Loading embedding model...")
+            EmbeddingService._model = SentenceTransformer(
+                "sentence-transformers/all-MiniLM-L6-v2"
+            )
+            print("Embedding model loaded.")
+
+        self.model = EmbeddingService._model
 
     def embed(self, text: str):
 
         return self.model.encode(
             text,
-            convert_to_numpy=True,
-        )
-
-    def embed_chunk(
-        self,
-        chunk: Chunk,
-    ) -> Embedding:
-
-        vector = self.embed(chunk.content)
-
-        return Embedding(
-            chunk=chunk,
-            vector=vector.tolist(),
-        )
+            convert_to_numpy=True
+        ).tolist()
 
     def embed_chunks(
         self,
         chunks: list[Chunk],
-    ) -> list[Embedding]:
-
-        texts = [
-            chunk.content
-            for chunk in chunks
-        ]
-
-        vectors = self.model.encode(
-            texts,
-            convert_to_numpy=True,
-        )
+    ):
 
         embeddings = []
 
-        for chunk, vector in zip(chunks, vectors):
+        for chunk in chunks:
+
+            vector = self.embed(
+                chunk.content
+            )
 
             embeddings.append(
                 Embedding(
                     chunk=chunk,
-                    vector=vector.tolist(),
+                    vector=vector,
                 )
             )
 
