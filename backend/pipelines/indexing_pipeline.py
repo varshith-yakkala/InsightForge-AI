@@ -1,35 +1,36 @@
-from pathlib import Path
-
-from backend.chunking.chunkers.recursive_chunker import RecursiveChunker
+from backend.chunking.chunkers.character_chunker import CharacterChunker
 from backend.embeddings.embedding_service import EmbeddingService
 from backend.ingestion.loaders.loader_factory import LoaderFactory
-from backend.retrieval.vector_store import VectorStore
+from backend.retrieval.bm25 import BM25Retriever
+from backend.retrieval.faiss_store import FAISSStore
+from backend.retrieval.hybrid_retriever import HybridRetriever
+from backend.retrieval.retriever import Retriever
 
 
 class IndexingPipeline:
 
-    def __init__(
-        self,
-        vector_store: VectorStore,
-        chunk_size: int = 500,
-        chunk_overlap: int = 100,
-    ):
+    def __init__(self):
 
-        self.vector_store = vector_store
+        self.loader_factory = LoaderFactory()
 
-        self.chunker = RecursiveChunker(
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
+        self.chunker = CharacterChunker(
+            chunk_size=500,
+            chunk_overlap=100,
         )
 
         self.embedding_service = EmbeddingService()
 
-    def index_file(
-        self,
-        file_path: str,
-    ):
+        self.faiss_store = FAISSStore()
 
-        loader = LoaderFactory.get_loader(file_path)
+        self.bm25 = BM25Retriever()
+
+        self.semantic_retriever = None
+
+        self.hybrid_retriever = None
+
+    def index(self, file_path: str):
+
+        loader = self.loader_factory.get_loader(file_path)
 
         document = loader.load(file_path)
 
@@ -37,30 +38,17 @@ class IndexingPipeline:
 
         embeddings = self.embedding_service.embed_chunks(chunks)
 
-        self.vector_store.add(embeddings)
+        self.faiss_store.add(embeddings)
 
-        return len(chunks)
+        self.bm25.add(embeddings)
 
-    def index_directory(
-        self,
-        directory: str,
-    ):
+        self.semantic_retriever = Retriever(
+            self.faiss_store
+        )
 
-        count = 0
+        self.hybrid_retriever = HybridRetriever(
+            self.semantic_retriever,
+            self.bm25,
+        )
 
-        directory = Path(directory)
-
-        for file in directory.rglob("*"):
-
-            if file.suffix.lower() not in [
-                ".txt",
-                ".pdf",
-                ".md",
-            ]:
-                continue
-
-            print(f"Indexing {file.name}")
-
-            count += self.index_file(str(file))
-
-        return count
+        return self.hybrid_retriever
