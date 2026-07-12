@@ -13,3 +13,8 @@ class QueryResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     status: str
+
+
+class UploadResponse(BaseModel):
+    message: str
+    filename: str
