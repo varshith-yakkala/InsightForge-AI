@@ -24,24 +24,6 @@ class IndexingPipeline:
 
         self.bm25 = BM25Retriever()
 
-        self.semantic_retriever = None
-
-        self.hybrid_retriever = None
-
-    def index(self, file_path: str):
-
-        loader = self.loader_factory.get_loader(file_path)
-
-        document = loader.load(file_path)
-
-        chunks = self.chunker.chunk(document)
-
-        embeddings = self.embedding_service.embed_chunks(chunks)
-
-        self.faiss_store.add(embeddings)
-
-        self.bm25.add(embeddings)
-
         self.semantic_retriever = Retriever(
             self.faiss_store
         )
@@ -49,6 +31,45 @@ class IndexingPipeline:
         self.hybrid_retriever = HybridRetriever(
             self.semantic_retriever,
             self.bm25,
+        )
+
+        self.indexed_files = set()
+
+    def index(
+        self,
+        file_path: str,
+    ):
+
+        if file_path in self.indexed_files:
+
+            return self.hybrid_retriever
+
+        loader = self.loader_factory.get_loader(
+            file_path
+        )
+
+        document = loader.load(
+            file_path
+        )
+
+        chunks = self.chunker.chunk(
+            document
+        )
+
+        embeddings = self.embedding_service.embed_chunks(
+            chunks
+        )
+
+        self.faiss_store.add(
+            embeddings
+        )
+
+        self.bm25.add(
+            embeddings
+        )
+
+        self.indexed_files.add(
+            file_path
         )
 
         return self.hybrid_retriever
