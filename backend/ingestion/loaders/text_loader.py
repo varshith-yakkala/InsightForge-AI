@@ -12,14 +12,19 @@ class TextLoader(BaseLoader):
         with open(path, "r", encoding="utf-8") as file:
             content = file.read()
 
+        filename = os.path.basename(path)
+
         metadata = {
             "source": path,
-            "file_name": os.path.basename(path),
-            "file_type": "txt"
+            "file_name": filename,
+            "file_type": "txt",
         }
 
         return Document(
             id=str(uuid.uuid4()),
             content=content,
-            metadata=metadata
+            metadata=metadata,
+            filename=filename,
+            file_type="txt",
+            size_bytes=os.path.getsize(path),
         )

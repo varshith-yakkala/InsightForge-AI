@@ -18,6 +18,10 @@ from backend.api.schemas import (
 router = APIRouter()
 
 
+# -------------------------------------------------
+# Health
+# -------------------------------------------------
+
 @router.get(
     "/health",
     response_model=HealthResponse,
@@ -25,9 +29,15 @@ router = APIRouter()
 def health():
 
     return {
-        "status": "healthy"
+        "status": "healthy",
+        "embeddingModel": "all-MiniLM-L6-v2",
+        "llmModel": "gemini-flash-latest",
     }
 
+
+# -------------------------------------------------
+# Query
+# -------------------------------------------------
 
 @router.post(
     "/query",
@@ -54,13 +64,17 @@ def query(
         )
 
 
+# -------------------------------------------------
+# Upload (Multi-file)
+# -------------------------------------------------
+
 @router.post(
     "/upload",
     response_model=UploadResponse,
 )
-async def upload_file(
+async def upload_files(
     request: Request,
-    file: UploadFile = File(...)
+    files: list[UploadFile] = File(...),
 ):
 
     upload_dir = "datasets/uploads"
@@ -70,31 +84,39 @@ async def upload_file(
         exist_ok=True,
     )
 
-    file_path = os.path.join(
-        upload_dir,
-        file.filename,
-    )
+    saved_paths = []
 
-    with open(
-        file_path,
-        "wb",
-    ) as f:
+    for file in files:
 
-        f.write(
-            await file.read()
+        file_path = os.path.join(
+            upload_dir,
+            file.filename,
+        )
+
+        with open(
+            file_path,
+            "wb",
+        ) as f:
+
+            f.write(
+                await file.read()
+            )
+
+        saved_paths.append(
+            file_path
         )
 
     rag = request.app.state.rag
 
     try:
 
-        rag.load_document(
-            file_path
+        documents = rag.load_documents(
+            saved_paths
         )
 
         return {
-            "message": "Document indexed successfully.",
-            "filename": file.filename,
+            "message": f"{len(documents)} document(s) indexed successfully.",
+            "documents": documents,
         }
 
     except Exception as e:

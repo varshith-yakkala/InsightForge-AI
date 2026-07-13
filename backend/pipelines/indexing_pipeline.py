@@ -35,6 +35,8 @@ class IndexingPipeline:
 
         self.indexed_files = set()
 
+        self.documents = []
+
     def index(
         self,
         file_path: str,
@@ -42,7 +44,12 @@ class IndexingPipeline:
 
         if file_path in self.indexed_files:
 
-            return self.hybrid_retriever
+            return {
+                "retriever": self.hybrid_retriever,
+                "document": None,
+                "chunks": 0,
+                "indexed": False,
+            }
 
         loader = self.loader_factory.get_loader(
             file_path
@@ -71,5 +78,31 @@ class IndexingPipeline:
         self.indexed_files.add(
             file_path
         )
+
+        self.documents.append(
+            {
+                "id": document.id,
+                "filename": document.filename,
+                "fileType": document.file_type,
+                "sizeBytes": document.size_bytes,
+                "uploadedAt": document.uploaded_at,
+                "chunks": len(chunks),
+                "embeddingStatus": "indexed",
+                "indexed": True,
+            }
+        )
+
+        return {
+            "retriever": self.hybrid_retriever,
+            "document": self.documents[-1],
+            "chunks": len(chunks),
+            "indexed": True,
+        }
+
+    def get_documents(self):
+
+        return self.documents
+
+    def get_retriever(self):
 
         return self.hybrid_retriever

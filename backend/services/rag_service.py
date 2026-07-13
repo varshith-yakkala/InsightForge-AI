@@ -9,7 +9,7 @@ class RAGService:
         self.indexer = IndexingPipeline()
 
         self.query_pipeline = QueryPipeline(
-            self.indexer.hybrid_retriever
+            self.indexer.get_retriever()
         )
 
     def load_document(
@@ -17,7 +17,36 @@ class RAGService:
         path: str,
     ):
 
-        self.indexer.index(path)
+        result = self.indexer.index(
+            path
+        )
+
+        return result
+
+    def load_documents(
+        self,
+        paths: list[str],
+    ):
+
+        indexed_documents = []
+
+        for path in paths:
+
+            result = self.indexer.index(
+                path
+            )
+
+            if result["indexed"]:
+
+                indexed_documents.append(
+                    result["document"]
+                )
+
+        return indexed_documents
+
+    def get_documents(self):
+
+        return self.indexer.get_documents()
 
     def query(
         self,
