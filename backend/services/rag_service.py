@@ -8,29 +8,21 @@ class RAGService:
 
         self.indexer = IndexingPipeline()
 
-        self.query_pipeline = None
+        self.query_pipeline = QueryPipeline(
+            self.indexer.hybrid_retriever
+        )
 
     def load_document(
         self,
         path: str,
     ):
 
-        retriever = self.indexer.index(path)
-
-        self.query_pipeline = QueryPipeline(
-            retriever
-        )
+        self.indexer.index(path)
 
     def query(
         self,
         question: str,
     ):
-
-        if self.query_pipeline is None:
-
-            raise ValueError(
-                "No indexed document."
-            )
 
         return self.query_pipeline.query(
             question
