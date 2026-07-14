@@ -6,6 +6,9 @@ from backend.retrieval.faiss_store import FAISSStore
 from backend.retrieval.hybrid_retriever import HybridRetriever
 from backend.retrieval.retriever import Retriever
 
+from backend.storage.document_registry import DocumentRegistry
+from backend.storage.models.indexed_document import IndexedDocument
+
 
 class IndexingPipeline:
 
@@ -35,7 +38,7 @@ class IndexingPipeline:
 
         self.indexed_files = set()
 
-        self.documents = []
+        self.registry = DocumentRegistry()
 
     def index(
         self,
@@ -75,33 +78,55 @@ class IndexingPipeline:
             embeddings
         )
 
+        indexed_document = IndexedDocument(
+            id=document.id,
+            file_name=document.filename,
+            file_type=document.file_type,
+            path=file_path,
+            chunk_count=len(chunks),
+            indexed_at=document.uploaded_at,
+            size_bytes=document.size_bytes,
+        )
+
+        self.registry.add(
+            indexed_document
+        )
+
         self.indexed_files.add(
             file_path
         )
 
-        self.documents.append(
-            {
-                "id": document.id,
-                "filename": document.filename,
-                "fileType": document.file_type,
-                "sizeBytes": document.size_bytes,
-                "uploadedAt": document.uploaded_at,
-                "chunks": len(chunks),
-                "embeddingStatus": "indexed",
-                "indexed": True,
-            }
-        )
-
         return {
             "retriever": self.hybrid_retriever,
-            "document": self.documents[-1],
+            "document": indexed_document.to_dict(),
             "chunks": len(chunks),
             "indexed": True,
         }
 
     def get_documents(self):
 
-        return self.documents
+        return [
+            document.to_dict()
+            for document in self.registry.all()
+        ]
+
+    def get_document(
+        self,
+        document_id: str,
+    ):
+
+        document = self.registry.get(
+            document_id
+        )
+
+        if document is None:
+            return None
+
+        return document.to_dict()
+
+    def get_document_count(self):
+
+        return self.registry.count()
 
     def get_retriever(self):
 

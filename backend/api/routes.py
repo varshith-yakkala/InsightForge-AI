@@ -1,4 +1,5 @@
 import os
+import traceback
 
 from fastapi import (
     APIRouter,
@@ -36,6 +37,62 @@ def health():
 
 
 # -------------------------------------------------
+# Documents
+# -------------------------------------------------
+
+@router.get(
+    "/documents",
+)
+def get_documents(
+    request: Request,
+):
+
+    rag = request.app.state.rag
+
+    return rag.get_documents()
+
+
+@router.get(
+    "/documents/{document_id}",
+)
+def get_document(
+    document_id: str,
+    request: Request,
+):
+
+    rag = request.app.state.rag
+
+    document = rag.get_document(
+        document_id
+    )
+
+    if document is None:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Document not found.",
+        )
+
+    return document
+
+
+# -------------------------------------------------
+# Dashboard Stats
+# -------------------------------------------------
+
+@router.get(
+    "/stats",
+)
+def get_stats(
+    request: Request,
+):
+
+    rag = request.app.state.rag
+
+    return rag.get_stats()
+
+
+# -------------------------------------------------
 # Query
 # -------------------------------------------------
 
@@ -58,6 +115,12 @@ def query(
 
     except Exception as e:
 
+        print("\n" + "=" * 80)
+        print("QUERY PIPELINE ERROR")
+        print("=" * 80)
+        traceback.print_exc()
+        print("=" * 80 + "\n")
+
         raise HTTPException(
             status_code=400,
             detail=str(e),
@@ -65,7 +128,7 @@ def query(
 
 
 # -------------------------------------------------
-# Upload (Multi-file)
+# Upload
 # -------------------------------------------------
 
 @router.post(
@@ -120,6 +183,12 @@ async def upload_files(
         }
 
     except Exception as e:
+
+        print("\n" + "=" * 80)
+        print("UPLOAD ERROR")
+        print("=" * 80)
+        traceback.print_exc()
+        print("=" * 80 + "\n")
 
         raise HTTPException(
             status_code=500,

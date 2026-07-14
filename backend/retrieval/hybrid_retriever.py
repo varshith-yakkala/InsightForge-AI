@@ -21,45 +21,51 @@ class HybridRetriever:
 
         semantic_results = self.semantic.retrieve(
             query,
-            top_k * 2,
+            top_k * 3,
         )
 
         bm25_results = self.bm25.search(
             query,
-            top_k * 2,
+            top_k * 3,
         )
 
         scores = {}
 
         for embedding, distance in semantic_results:
 
-            score = 1 / (1 + distance)
-
             chunk_id = embedding.chunk.id
 
-            scores[chunk_id] = {
-                "embedding": embedding,
-                "score": score,
-            }
+            score = 1 / (1 + distance)
+
+            if chunk_id not in scores:
+
+                scores[chunk_id] = {
+                    "embedding": embedding,
+                    "score": score,
+                }
+
+            else:
+
+                scores[chunk_id]["score"] += score
 
         for bm25_score, embedding in bm25_results:
 
             chunk_id = embedding.chunk.id
 
-            if chunk_id in scores:
-
-                scores[chunk_id]["score"] += bm25_score
-
-            else:
+            if chunk_id not in scores:
 
                 scores[chunk_id] = {
                     "embedding": embedding,
                     "score": bm25_score,
                 }
 
+            else:
+
+                scores[chunk_id]["score"] += bm25_score
+
         ranked = sorted(
             scores.values(),
-            key=lambda x: x["score"],
+            key=lambda item: item["score"],
             reverse=True,
         )
 

@@ -17,36 +17,66 @@ class RAGService:
         path: str,
     ):
 
-        result = self.indexer.index(
+        return self.indexer.index(
             path
         )
-
-        return result
 
     def load_documents(
         self,
         paths: list[str],
     ):
 
-        indexed_documents = []
+        documents = []
 
         for path in paths:
 
-            result = self.indexer.index(
-                path
-            )
+            result = self.indexer.index(path)
 
             if result["indexed"]:
 
-                indexed_documents.append(
+                documents.append(
                     result["document"]
                 )
 
-        return indexed_documents
+        return documents
 
     def get_documents(self):
 
         return self.indexer.get_documents()
+
+    def get_document(
+        self,
+        document_id: str,
+    ):
+
+        return self.indexer.get_document(
+            document_id
+        )
+
+    def get_stats(self):
+
+        documents = self.indexer.get_documents()
+
+        return {
+
+            "documentsIndexed": len(documents),
+
+            "totalChunks": sum(
+                d["chunk_count"]
+                for d in documents
+            ),
+
+            "totalEmbeddings": sum(
+                d["chunk_count"]
+                for d in documents
+            ),
+
+            "totalQueries": 0,
+
+            "avgRetrievalMs": 0,
+
+            "avgLlmResponseMs": 0,
+        }
 
     def query(
         self,

@@ -30,14 +30,22 @@ class HealthResponse(BaseModel):
 # -------------------------
 
 class DocumentResponse(BaseModel):
+
     id: str
-    filename: str
-    fileType: str
-    sizeBytes: int
-    uploadedAt: str
-    chunks: int
-    embeddingStatus: str
-    indexed: bool
+
+    file_name: str
+
+    file_type: str
+
+    path: str
+
+    chunk_count: int
+
+    indexed_at: str
+
+    status: str
+
+    size_bytes: int
 
 
 # -------------------------
@@ -45,5 +53,26 @@ class DocumentResponse(BaseModel):
 # -------------------------
 
 class UploadResponse(BaseModel):
+
     message: str
+
     documents: list[DocumentResponse]
+
+
+# -------------------------
+# Dashboard
+# -------------------------
+
+class StatsResponse(BaseModel):
+
+    documentsIndexed: int
+
+    totalChunks: int
+
+    totalEmbeddings: int
+
+    totalQueries: int
+
+    avgRetrievalMs: float
+
+    avgLlmResponseMs: float

@@ -1,40 +1,230 @@
-import { create } from 'zustand'
-import type { Document } from '@/types'
-import { mockDocuments } from '@/data/mockData'
-import { uploadDocuments } from '@/services/api'
+import { create } from "zustand";
 
-interface DocumentsState {
-  documents: Document[]
-  uploading: { file: File; progress: number }[]
-  addDocuments: (docs: Document[]) => void
-  removeDocument: (id: string) => void
-  toggleFavorite: (id: string) => void
-  upload: (backendUrl: string, files: File[]) => Promise<void>
+import type { Document } from "@/types";
+
+import {
+  uploadDocuments,
+  getDocuments,
+} from "@/services/api";
+
+interface UploadProgress {
+
+  file: File;
+
+  progress: number;
+
 }
 
-export const useDocumentsStore = create<DocumentsState>((set, get) => ({
-  documents: mockDocuments,
+interface DocumentsState {
+
+  documents: Document[];
+
+  uploading: UploadProgress[];
+
+  refresh: (
+    backendUrl: string,
+  ) => Promise<void>;
+
+  addDocuments: (
+    docs: Document[],
+  ) => void;
+
+  removeDocument: (
+    id: string,
+  ) => void;
+
+  toggleFavorite: (
+    id: string,
+  ) => void;
+
+  clearDocuments: () => void;
+
+  upload: (
+    backendUrl: string,
+    files: File[],
+  ) => Promise<void>;
+}
+
+export const useDocumentsStore =
+create<DocumentsState>((set, get) => ({
+
+  documents: [],
+
   uploading: [],
 
-  addDocuments: (docs) => set((s) => ({ documents: [...docs, ...s.documents] })),
+  refresh: async (
+    backendUrl,
+  ) => {
 
-  removeDocument: (id) => set((s) => ({ documents: s.documents.filter((d) => d.id !== id) })),
+    const docs =
+      await getDocuments(
+        backendUrl,
+      );
 
-  toggleFavorite: (id) =>
-    set((s) => ({
-      documents: s.documents.map((d) => (d.id === id ? { ...d, favorite: !d.favorite } : d)),
+    set({
+
+      documents: docs,
+
+    });
+
+  },
+
+  addDocuments: (
+    docs,
+  ) =>
+
+    set((state) => ({
+
+      documents: [
+        ...docs,
+        ...state.documents,
+      ],
+
     })),
 
-  upload: async (backendUrl, files) => {
-    set((s) => ({ uploading: [...s.uploading, ...files.map((file) => ({ file, progress: 0 }))] }))
+  removeDocument: (
+    id,
+  ) =>
 
-    const result = await uploadDocuments(backendUrl, files, (percent) => {
-      set((s) => ({
-        uploading: s.uploading.map((u) => (files.includes(u.file) ? { ...u, progress: percent } : u)),
-      }))
-    })
+    set((state) => ({
 
-    get().addDocuments(result.documents)
-    set((s) => ({ uploading: s.uploading.filter((u) => !files.includes(u.file)) }))
+      documents:
+        state.documents.filter(
+
+          (doc) =>
+            doc.id !== id
+
+        ),
+
+    })),
+
+  toggleFavorite: (
+    id,
+  ) =>
+
+    set((state) => ({
+
+      documents:
+
+        state.documents.map(
+
+          (doc) =>
+
+            doc.id === id
+
+              ? {
+
+                  ...doc,
+
+                  favorite:
+                    !doc.favorite,
+
+                }
+
+              : doc
+
+        ),
+
+    })),
+
+  clearDocuments: () =>
+
+    set({
+
+      documents: [],
+
+    }),
+
+  upload: async (
+
+    backendUrl,
+
+    files,
+
+  ) => {
+
+    set((state) => ({
+
+      uploading: [
+
+        ...state.uploading,
+
+        ...files.map(
+
+          (file) => ({
+
+            file,
+
+            progress: 0,
+
+          })
+
+        ),
+
+      ],
+
+    }));
+
+    await uploadDocuments(
+
+      backendUrl,
+
+      files,
+
+      (progress) => {
+
+        set((state) => ({
+
+          uploading:
+
+            state.uploading.map(
+
+              (upload) =>
+
+                files.includes(
+
+                  upload.file
+
+                )
+
+                  ? {
+
+                      ...upload,
+
+                      progress,
+
+                    }
+
+                  : upload
+
+            ),
+
+        }));
+
+      },
+
+    );
+
+    await get().refresh(
+      backendUrl,
+    );
+
+    set((state) => ({
+
+      uploading:
+
+        state.uploading.filter(
+
+          (upload) =>
+
+            !files.includes(
+              upload.file,
+            ),
+
+        ),
+
+    }));
+
   },
-}))
+
+}));
