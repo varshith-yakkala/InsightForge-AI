@@ -1,3 +1,6 @@
+import pickle
+from pathlib import Path
+
 from rank_bm25 import BM25Okapi
 
 from backend.embeddings.models.embedding import Embedding
@@ -18,13 +21,19 @@ class BM25Retriever:
         embeddings: list[Embedding],
     ):
 
-        self.embeddings.extend(embeddings)
+        self.embeddings.extend(
+            embeddings
+        )
 
         self.documents.extend(
+
             [
                 embedding.chunk.content.split()
+
                 for embedding in embeddings
+
             ]
+
         )
 
         self.bm25 = BM25Okapi(
@@ -38,6 +47,7 @@ class BM25Retriever:
     ):
 
         if self.bm25 is None:
+
             return []
 
         tokenized_query = query.split()
@@ -47,12 +57,81 @@ class BM25Retriever:
         )
 
         ranked = sorted(
+
             zip(
                 scores,
                 self.embeddings,
             ),
+
             reverse=True,
+
             key=lambda x: x[0],
+
         )
 
         return ranked[:top_k]
+
+    def save(
+        self,
+        path: str,
+    ):
+
+        path = Path(path)
+
+        path.parent.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        with open(
+            path,
+            "wb",
+        ) as f:
+
+            pickle.dump(
+
+                {
+
+                    "documents": self.documents,
+
+                    "embeddings": self.embeddings,
+
+                },
+
+                f,
+
+            )
+
+    def load(
+        self,
+        path: str,
+    ):
+
+        path = Path(path)
+
+        if not path.exists():
+
+            return
+
+        with open(
+            path,
+            "rb",
+        ) as f:
+
+            data = pickle.load(
+                f
+            )
+
+        self.documents = data[
+            "documents"
+        ]
+
+        self.embeddings = data[
+            "embeddings"
+        ]
+
+        if len(self.documents):
+
+            self.bm25 = BM25Okapi(
+                self.documents
+            )

@@ -1,0 +1,22 @@
+[
+  {
+    "id": "f5df18dd-c3a0-4ac0-a143-74ab56b8d1d7",
+    "file_name": "sample.txt",
+    "file_type": "txt",
+    "path": "datasets\\raw\\txt\\sample.txt",
+    "chunk_count": 1,
+    "indexed_at": "2026-07-16T09:55:58.174608",
+    "status": "indexed",
+    "size_bytes": 83
+  },
+  {
+    "id": "ec31f446-8e8c-4fe7-b331-8f153c1f7972",
+    "file_name": "sample.txt",
+    "file_type": "txt",
+    "path": "datasets\\uploads\\sample.txt",
+    "chunk_count": 1,
+    "indexed_at": "2026-07-16T11:42:53.352783",
+    "status": "indexed",
+    "size_bytes": 83
+  }
+]

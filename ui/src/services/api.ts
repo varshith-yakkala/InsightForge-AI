@@ -8,7 +8,7 @@ import type {
 function client(backendUrl: string) {
   return axios.create({
     baseURL: backendUrl,
-    timeout: 15000,
+    timeout: 30000,
   });
 }
 
@@ -41,6 +41,7 @@ export async function checkHealth(
         Math.round(
           performance.now() - started
         ),
+
     };
 
   } catch {
@@ -52,8 +53,11 @@ export async function checkHealth(
       embeddingModel: "Unavailable",
 
       llmModel: "Unavailable",
+
     };
+
   }
+
 }
 
 /* ---------------------------------- */
@@ -65,37 +69,42 @@ export async function getDocuments(
 ): Promise<Document[]> {
 
   const res =
-    await client(backendUrl).get(
-      "/documents"
+    await client(
+      backendUrl,
+    ).get(
+      "/documents",
     );
 
-  return res.data.map((doc: any) => ({
+  return res.data.map(
+    (doc: any) => ({
 
-    id: doc.id,
+      id: doc.id,
 
-    filename:
-      doc.file_name,
+      filename:
+        doc.file_name,
 
-    fileType:
-      doc.file_type,
+      fileType:
+        doc.file_type,
 
-    sizeBytes:
-      doc.size_bytes,
+      sizeBytes:
+        doc.size_bytes,
 
-    uploadedAt:
-      doc.indexed_at,
+      uploadedAt:
+        doc.indexed_at,
 
-    chunks:
-      doc.chunk_count,
+      chunks:
+        doc.chunk_count,
 
-    embeddingStatus:
-      doc.status,
+      embeddingStatus:
+        doc.status,
 
-    indexed: true,
+      indexed: true,
 
-    favorite: false,
+      favorite: false,
 
-  }));
+    }),
+  );
+
 }
 
 /* ---------------------------------- */
@@ -115,12 +124,13 @@ export async function uploadDocuments(
   files: File[],
 
   onProgress?: (
-    percent: number
+    percent: number,
   ) => void,
 
 ): Promise<UploadResult> {
 
-  const form = new FormData();
+  const form =
+    new FormData();
 
   files.forEach(file => {
 
@@ -133,7 +143,7 @@ export async function uploadDocuments(
 
   const res =
     await client(
-      backendUrl
+      backendUrl,
     ).post(
 
       "/upload",
@@ -162,9 +172,9 @@ export async function uploadDocuments(
 
                 e.loaded /
                   e.total *
-                  100
+                  100,
 
-              )
+              ),
 
             );
 
@@ -172,7 +182,7 @@ export async function uploadDocuments(
 
         },
 
-      }
+      },
 
     );
 
@@ -207,7 +217,7 @@ export async function uploadDocuments(
 
           favorite: false,
 
-        })
+        }),
       ),
 
   };
@@ -226,12 +236,14 @@ export async function getDashboardStats(
 
   const stats =
     await client(
-      backendUrl
-    ).get("/stats");
+      backendUrl,
+    ).get(
+      "/stats",
+    );
 
   const docs =
     await getDocuments(
-      backendUrl
+      backendUrl,
     );
 
   return {
@@ -250,7 +262,7 @@ export async function getDashboardStats(
 
         count:
           docs.filter(
-            d => d.fileType === "pdf"
+            d => d.fileType === "pdf",
           ).length,
 
       },
@@ -261,7 +273,7 @@ export async function getDashboardStats(
 
         count:
           docs.filter(
-            d => d.fileType === "txt"
+            d => d.fileType === "txt",
           ).length,
 
       },
@@ -272,7 +284,7 @@ export async function getDashboardStats(
 
         count:
           docs.filter(
-            d => d.fileType === "md"
+            d => d.fileType === "md",
           ).length,
 
       },
@@ -331,7 +343,7 @@ export async function runQuery(
 
   const res =
     await client(
-      backendUrl
+      backendUrl,
     ).post(
 
       "/query",
@@ -342,7 +354,7 @@ export async function runQuery(
 
         ...settings,
 
-      }
+      },
 
     );
 
@@ -352,54 +364,59 @@ export async function runQuery(
 
   return {
 
-    // backend returns "answer"
     content:
-      res.data.answer,
+      res.data.content,
 
-    // temporary placeholders until backend provides these
-    confidence: 1,
+    confidence:
+      res.data.confidence ?? 0,
 
-    generationTimeMs: 0,
+    generationTimeMs:
+      res.data.generationTimeMs ?? 0,
 
-    tokenUsage: {
+    tokenUsage:
+      res.data.tokenUsage ?? {
 
-      prompt: 0,
+        prompt: 0,
 
-      completion: 0,
+        completion: 0,
 
-      total: 0,
+        total: 0,
 
-    },
+      },
 
-    retrievedChunks: [],
+    retrievedChunks:
+      res.data.retrievedChunks ?? [],
 
     sources:
 
-      (res.data.sources || []).map(
-        (source: any, index: number) => ({
+      (res.data.sources ?? []).map(
+        (source: any) => ({
 
-          id: String(index),
+          id:
+            source.id,
 
           documentId:
-            source.id ?? String(index),
+            source.documentId,
 
           filename:
-            source.file_name,
+            source.filename,
 
           fileType:
-            source.file_type,
+            source.fileType,
 
           page:
             source.page,
 
           chunkIndex:
-            source.chunk_index ?? 0,
+            source.chunkIndex,
 
-          similarity: 1,
+          similarity:
+            source.similarity,
 
-          preview: "",
+          preview:
+            source.preview,
 
-        })
+        }),
       ),
 
   };

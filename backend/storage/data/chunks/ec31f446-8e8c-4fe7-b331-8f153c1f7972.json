@@ -1,0 +1,19 @@
+[
+  {
+    "id": "f2fc1a66-1d55-4ff3-8101-f625ff186b03",
+    "document_id": "ec31f446-8e8c-4fe7-b331-8f153c1f7972",
+    "content": "Hello!\n\nThis is my first document.\n\nI am building InsightForge AI from scratch.",
+    "metadata": {
+      "source": "datasets\\uploads\\sample.txt",
+      "file_name": "sample.txt",
+      "file_type": "txt",
+      "chunk_number": 0,
+      "start_char": 0,
+      "end_char": 79
+    },
+    "chunk_index": 0,
+    "start_offset": 0,
+    "end_offset": 0,
+    "checksum": ""
+  }
+]
