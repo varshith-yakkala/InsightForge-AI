@@ -1,32 +1,29 @@
 import os
-import time
 
 from dotenv import load_dotenv
-from google import genai
+from groq import Groq
 
 load_dotenv()
 
 
 class GeminiGenerator:
+    """
+    Kept the class name the same so the rest of the project
+    doesn't need any import changes.
+    """
 
     def __init__(self):
 
-        api_key = os.getenv(
-            "GEMINI_API_KEY"
-        )
+        api_key = os.getenv("GROQ_API_KEY")
 
         if not api_key:
-            raise ValueError(
-                "Missing GEMINI_API_KEY"
-            )
+            raise ValueError("Missing GROQ_API_KEY")
 
-        self.client = genai.Client(
-            api_key=api_key
-        )
+        self.client = Groq(api_key=api_key)
 
         self.model = os.getenv(
-            "GEMINI_MODEL",
-            "gemini-3.5-flash",
+            "GROQ_MODEL",
+            "llama-3.3-70b-versatile",
         )
 
     def generate(
@@ -38,51 +35,40 @@ class GeminiGenerator:
         print("MODEL:", self.model)
         print("PROMPT LENGTH:", len(prompt))
         print("=" * 80)
-        print(prompt[:2000])
-        print("=" * 80)
 
-        last_error = None
+        try:
 
-        for attempt in range(3):
+            completion = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    }
+                ],
+                temperature=0.2,
+                max_tokens=1024,
+            )
 
-            try:
+            answer = completion.choices[0].message.content
 
-                print(f"\nAttempt {attempt + 1}/3")
-                print("Calling Gemini...")
+            if answer is None:
+                answer = ""
 
-                response = self.client.models.generate_content(
-                    model=self.model,
-                    contents=prompt,
-                )
+            return {
+                "success": True,
+                "answer": answer.strip(),
+                "error": None,
+            }
 
-                print("Gemini responded successfully.")
+        except Exception as e:
 
-                print("Response object:")
-                print(response)
+            print("\nGroq request failed.")
+            print(type(e).__name__)
+            print(e)
 
-                if response.text:
-
-                    print("Response text received.")
-                    print("=" * 80)
-
-                    return response.text.strip()
-
-                print("Gemini returned an empty response.")
-                return "The model returned an empty response."
-
-            except Exception as e:
-
-                last_error = e
-
-                print("\nGemini request failed.")
-                print("Attempt:", attempt + 1)
-                print("Exception Type:", type(e).__name__)
-                print("Exception:", e)
-                print("=" * 80)
-
-                if attempt < 2:
-                    print("Retrying in 2 seconds...\n")
-                    time.sleep(2)
-
-        print("\nAll Gemini attempts failed.")
-        raise last_error
+            return {
+                "success": False,
+                "answer": "",
+                "error": str(e),
+            }

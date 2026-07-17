@@ -43,6 +43,38 @@ class QueryPipeline:
             top_k=30,
         )
 
+        if not candidate_results:
+
+            return {
+
+                "question": question,
+
+                "content": "I couldn't find any relevant information in the indexed documents.",
+
+                "answer": "I couldn't find any relevant information in the indexed documents.",
+
+                "confidence": 0.0,
+
+                "sources": [],
+
+                "retrievedChunks": [],
+
+                "generationTimeMs": 0,
+
+                "llmAvailable": False,
+
+                "tokenUsage": {
+
+                    "prompt": 0,
+
+                    "completion": 0,
+
+                    "total": 0,
+
+                },
+
+            }
+
         # --------------------------------------------------
         # Step 2 : Cross Encoder Reranking
         # --------------------------------------------------
@@ -83,9 +115,24 @@ class QueryPipeline:
         # Step 6 : LLM Generation
         # --------------------------------------------------
 
-        answer = self.generator.generate(
+        generation = self.generator.generate(
             prompt
         )
+
+        if generation["success"]:
+
+            answer = generation["answer"]
+
+            llm_available = True
+
+        else:
+
+            answer = (
+                "The language model is currently unavailable.\n\n"
+                f"Error: {generation['error']}"
+            )
+
+            llm_available = False
 
         generation_time = int(
             (time.time() - start) * 1000
@@ -126,43 +173,58 @@ class QueryPipeline:
 
                 sources.append(
                     {
+
                         "id": chunk.id,
+
                         "documentId": chunk.document_id,
+
                         "filename": filename,
+
                         "fileType": metadata.get(
                             "file_type",
                             "txt",
                         ),
+
                         "page": metadata.get(
                             "page",
                         ),
+
                         "chunkIndex": metadata.get(
                             "chunk_number",
                             rank,
                         ),
+
                         "similarity": round(
                             similarity,
                             4,
                         ),
+
                         "preview": chunk.content[:250],
+
                     }
                 )
 
             retrieved_chunks.append(
                 {
+
                     "id": chunk.id,
+
                     "chunkIndex": metadata.get(
                         "chunk_number",
                         rank,
                     ),
+
                     "page": metadata.get(
                         "page",
                     ),
+
                     "text": chunk.content,
+
                     "similarity": round(
                         similarity,
                         4,
                     ),
+
                 }
             )
 
@@ -181,6 +243,8 @@ class QueryPipeline:
             "retrievedChunks": retrieved_chunks,
 
             "generationTimeMs": generation_time,
+
+            "llmAvailable": llm_available,
 
             "tokenUsage": {
 
