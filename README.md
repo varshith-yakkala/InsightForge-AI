@@ -1120,22 +1120,6 @@ Potential research directions include:
 - Domain-Specific Fine-Tuning
 
 ---
-
-# 📄 License
-
-This project is licensed under the **MIT License**.
-
-You are free to:
-
-- Use
-- Modify
-- Distribute
-- Build upon the project
-
-with proper attribution.
-
----
-
 # 🙏 Acknowledgements
 
 This project was inspired by modern Retrieval-Augmented Generation systems and the open-source AI ecosystem.
