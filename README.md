@@ -1230,22 +1230,19 @@ VIT-AP University
 
 GitHub:
 ```
-https://github.com/<your-github-username>
+https://github.com/varshith-yakkala
 ```
 
 LinkedIn:
 ```
-https://linkedin.com/in/<your-linkedin-profile>
+[https://linkedin.com/in/<your-linkedin-profile>](https://www.linkedin.com/in/sri-varshith-yakkala/)
 ```
 
-Portfolio:
-```
-https://your-portfolio.com
-```
+
 
 Email:
 ```
-your-email@example.com
+varshithyakkala@gmail.com
 ```
 
 ---
